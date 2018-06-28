@@ -30,7 +30,7 @@ public class TicTacToe {
     boolean isValidMove;
     int move;
     do {
-      move = player.getMove(board);
+      move = player.getMove(Arrays.copyOf(board, size * size));
       isValidMove = isValidMove(move);
       if (!isValidMove) {
         System.out.println("Invalid move: the move index must be a number in the range " + 0 + "-" +

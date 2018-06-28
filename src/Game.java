@@ -7,18 +7,20 @@ public class Game {
     char player1Human = getYesNoAnswer("Will player 1 be a human? (y/n)");
     char player2Human = getYesNoAnswer("Will player 2 be a human? (y/n)");
 
-    TicTacToe ticTacToeGame = new TicTacToe(size, getPlayer(player1Human), getPlayer(player2Human));
+    TicTacToe ticTacToeGame = new TicTacToe(size, getPlayer(player1Human,
+        PlayerEnum.PLAYER1.toString()), getPlayer(player2Human,
+        PlayerEnum.PLAYER2.toString()));
 
     ticTacToeGame.play();
 
   }
 
-  private static Player getPlayer(char playerHuman) {
+  private static Player getPlayer(char playerHuman, String playerPiece) {
     switch (playerHuman) {
       case 'y':
         return new HumanPlayer();
       case 'n':
-        return new ComputerPlayer();
+        return new ComputerPlayer(playerPiece);
       default:
         return null;
     }
