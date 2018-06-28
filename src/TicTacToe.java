@@ -14,6 +14,7 @@ public class TicTacToe {
     Arrays.fill(board, PlayerEnum.NONE.toString());
   }
 
+
   private void makeMove(PlayerEnum currentPlayer) {
     Player player;
     switch (currentPlayer) {
@@ -31,14 +32,20 @@ public class TicTacToe {
     do {
       move = player.getMove(board);
       isValidMove = isValidMove(move);
+      if (!isValidMove) {
+        System.out.println("Invalid move: the move index must be a number in the range " + 0 + "-" +
+            (size * size - 1) + " and it mustn't be occupied already");
+      }
     } while (!isValidMove);
 
     board[move] = currentPlayer.toString();
   }
 
+
   private boolean isValidMove(int move) {
     return move >= 0 && move < size * size && board[move].equals(PlayerEnum.NONE.toString());
   }
+
 
   public void play() {
     int moves = 0;
@@ -55,6 +62,7 @@ public class TicTacToe {
 
     // TODO: Print result
   }
+
 
   private void displayBoard() {
     StringBuilder sb = new StringBuilder();
@@ -82,6 +90,7 @@ public class TicTacToe {
 
     System.out.println(sb.toString());
   }
+
 
   private void addSeparatorLine(StringBuilder sb) {
     for (int i = 0; i < 4 * size + 1; i++) {
