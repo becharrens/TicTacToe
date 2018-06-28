@@ -1,3 +1,4 @@
 public interface Player {
-  int getMove();
+
+  int getMove(String[] board);
 }

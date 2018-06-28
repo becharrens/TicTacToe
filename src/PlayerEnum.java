@@ -4,6 +4,11 @@ public enum PlayerEnum {
     PlayerEnum opponent() {
       return NONE;
     }
+
+    @Override
+    public String toString() {
+      return " ";
+    }
   },
 
   PLAYER1 {
@@ -11,12 +16,22 @@ public enum PlayerEnum {
     PlayerEnum opponent() {
       return PLAYER2;
     }
+
+    @Override
+    public String toString() {
+      return "X";
+    }
   },
 
   PLAYER2 {
     @Override
     PlayerEnum opponent() {
       return PLAYER1;
+    }
+
+    @Override
+    public String toString() {
+      return "O";
     }
   };
 
