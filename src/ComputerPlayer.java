@@ -1,4 +1,5 @@
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class ComputerPlayer implements Player {
@@ -19,7 +20,22 @@ public class ComputerPlayer implements Player {
 
     int size = (int) Math.sqrt(board.length);
 
-    int move = getWinningMoveThisTurn(validMoves, board, size);
+    int move = getWinningMoveThisTurn(validMoves, board, playerPiece, size);
+    if (move != -1) {
+      return move;
+    }
+
+    move = getWinningMoveThisTurn(validMoves, board, getOpponentPiece(playerPiece), size);
+    if (move != -1) {
+      return move;
+    }
+
+    move = getWinningMoveNextTurn(validMoves, board, playerPiece, size);
+    if (move != -1) {
+      return move;
+    }
+
+    move = getWinningMoveNextTurn(validMoves, board, getOpponentPiece(playerPiece), size);
     if (move != -1) {
       return move;
     }
@@ -27,40 +43,37 @@ public class ComputerPlayer implements Player {
     return -1;
   }
 
-  private int getWinningMoveThisTurn(List<Integer> validMoves, String[] board, int size) {
-    boolean isRowFull;
-    boolean isColumnFull;
-    boolean isDiag1Full;
-    boolean isDiag2Full;
+  private int getWinningMoveThisTurn(List<Integer> validMoves, String[] board, String playerPiece, int size) {
+
+    int tileIdx;
+    boolean[] isLineFull = new boolean[4];
+
     for (Integer move : validMoves) {
-      isRowFull = true;
-      isColumnFull = true;
-      isDiag1Full = isOnDiagonal1(move, size);
-      isDiag2Full = isOnDiagonal2(move, size);
+
+      Arrays.fill(isLineFull, true);
+      isLineFull[2] = isOnDiagonal1(move, size);
+      isLineFull[3] = isOnDiagonal2(move, size);
 
       int row = move / size;
       int col = move % size;
 
       for (int i = 0; i < size; i++) {
-        if (isRowFull && size * row + i != move && !board[size * row + i].equals(playerPiece)) {
-          isRowFull = false;
-        }
-        if (isColumnFull && size * i + col != move && !board[size * i + col].equals(playerPiece)) {
-          isColumnFull = false;
-        }
-        if (isDiag1Full && size * i + i != move && !board[size * i + i].equals(playerPiece)) {
-          isDiag1Full = false;
-        }
-        if (isDiag2Full && size * i + (size - 1 - i) != move && !board[size * i + (size - 1 - i)].equals(playerPiece)) {
-          isDiag2Full = false;
+        for (int j = 0; j < isLineFull.length; j++) {
+          tileIdx = getTileIdx(j, i, row, col, size);
+          if (isLineFull[j] && tileIdx != move && !board[tileIdx].equals(playerPiece)) {
+            isLineFull[j] = false;
+          }
         }
       }
-      if (isRowFull || isColumnFull || isDiag1Full || isDiag2Full) {
-        return move;
+      for (boolean lineFull : isLineFull) {
+        if (lineFull) {
+          return move;
+        }
       }
     }
     return -1;
   }
+
 
   private boolean isOnDiagonal1(int tile, int size) {
     int row = tile / size;
@@ -74,12 +87,79 @@ public class ComputerPlayer implements Player {
     return row + col == size - 1;
   }
 
-  private String getOpponentPiece() {
+  private String getOpponentPiece(String playerPiece) {
     if (playerPiece.equals("X")) {
       return "O";
     } else if (playerPiece.equals("O")) {
       return "X";
     }
-    return playerPiece;
+    return this.playerPiece;
+  }
+
+
+  private int getWinningMoveNextTurn(List<Integer> validMoves, String[] board, String playerPiece, int size) {
+
+    int row;
+    int col;
+
+    int[] nEmptyTilesInLine = new int[4];
+    boolean[] isLineBlocked = new boolean[4];
+    String opponent = getOpponentPiece(playerPiece);
+
+    for (Integer move : validMoves) {
+
+      Arrays.fill(nEmptyTilesInLine, 0);
+      Arrays.fill(isLineBlocked, false);
+      isLineBlocked[2] = !isOnDiagonal1(move, size);
+      isLineBlocked[3] = !isOnDiagonal2(move, size);
+
+      row = move / size;
+      col = move % size;
+
+      int tileIdx;
+      for (int i = 0; i < size; i++) {
+        for (int j = 0; j < 4; j++) {
+
+          if (!isLineBlocked[j]) {
+
+            tileIdx = getTileIdx(j, i, row, col, size);
+
+            if (board[tileIdx].equals(opponent)) {
+              isLineBlocked[j] = true;
+              nEmptyTilesInLine[j] = 0;
+            } else if (!board[tileIdx].equals(playerPiece)) {
+              nEmptyTilesInLine[j]++;
+            }
+          }
+        }
+      }
+
+      int numWaysToWin = 0;
+      for (int i = 0; i < 4; i++) {
+        if (nEmptyTilesInLine[i] == size - 2) {
+          numWaysToWin++;
+        }
+      }
+
+      if (numWaysToWin > 1) {
+        return move;
+      }
+    }
+    return -1;
+  }
+
+  private int getTileIdx(int j, int i, int row, int col, int size) {
+    switch (j) {
+      case 0:
+        return size * row + i;
+      case 1:
+        return size * i + col;
+      case 2:
+        return size * i + i;
+      case 3:
+        return size * i + (size - 1 - i);
+      default:
+        return -1;
+    }
   }
 }
