@@ -1,6 +1,4 @@
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 public class ComputerPlayer implements Player {
   private final String playerPiece;
@@ -11,7 +9,7 @@ public class ComputerPlayer implements Player {
 
   @Override
   public int getMove(String[] board) {
-    List<Integer> validMoves = new ArrayList<>();
+    Set<Integer> validMoves = new HashSet<>();
     for (int i = 0; i < board.length; i++) {
       if (board[i].equals(" ")) {
         validMoves.add(i);
@@ -35,17 +33,65 @@ public class ComputerPlayer implements Player {
       return move;
     }
 
-    move = getWinningMoveNextTurn(validMoves, board, getOpponentPiece(playerPiece), size);
-    if (move != -1) {
-      return move;
-    }
+//    move = getWinningMoveNextTurn(validMoves, board, getOpponentPiece(playerPiece), size);
+//    if (move != -1) {
+//      return move;
+//    }
+    removeLosingMoves(validMoves, board, playerPiece, size);
 
-    return -1;
+    return getMostBlockingMove(validMoves, board, playerPiece, size);
   }
 
-  private int getWinningMoveThisTurn(List<Integer> validMoves, String[] board, String playerPiece, int size) {
+  private int getMostBlockingMove(Set<Integer> validMoves, String[] board, String playerPiece, int size) {
+    int bestMove = -1;
+    int mostLinesBlocked = -1;
+    int linesBlocked;
+    int row;
+    int col;
+    int tileIdx;
+
+    boolean[] blockedLines = new boolean[4];
+
+    for (Integer move : validMoves) {
+
+      Arrays.fill(blockedLines, true);
+      blockedLines[2] = isOnDiagonal1(move, size);
+      blockedLines[3] = isOnDiagonal2(move, size);
+
+      row = move / size;
+      col = move % size;
+
+      for (int i = 0; i < size; i++) {
+        for (int j = 0; j < blockedLines.length; j++) {
+          tileIdx = getTileIdx(j, i, row, col, size);
+          if (blockedLines[j] && !board[tileIdx].equals(" ")) {
+            blockedLines[j] = false;
+          }
+        }
+      }
+
+      linesBlocked = 0;
+      for (boolean  isLineBlocked : blockedLines) {
+        if (isLineBlocked) {
+          linesBlocked++;
+        }
+      }
+      if (linesBlocked > mostLinesBlocked ||
+          (linesBlocked == mostLinesBlocked &&
+              distanceToCentre(size, move) < distanceToCentre(size, bestMove))
+          ) {
+        mostLinesBlocked = linesBlocked;
+        bestMove = move;
+      }
+    }
+    return bestMove;
+  }
+
+  private int getWinningMoveThisTurn(Set<Integer> validMoves, String[] board, String playerPiece, int size) {
 
     int tileIdx;
+    int row;
+    int col;
     boolean[] isLineFull = new boolean[4];
 
     for (Integer move : validMoves) {
@@ -54,8 +100,8 @@ public class ComputerPlayer implements Player {
       isLineFull[2] = isOnDiagonal1(move, size);
       isLineFull[3] = isOnDiagonal2(move, size);
 
-      int row = move / size;
-      int col = move % size;
+      row = move / size;
+      col = move % size;
 
       for (int i = 0; i < size; i++) {
         for (int j = 0; j < isLineFull.length; j++) {
@@ -97,7 +143,7 @@ public class ComputerPlayer implements Player {
   }
 
 
-  private int getWinningMoveNextTurn(List<Integer> validMoves, String[] board, String playerPiece, int size) {
+  private int getWinningMoveNextTurn(Set<Integer> validMoves, String[] board, String playerPiece, int size) {
 
     int row;
     int col;
@@ -136,7 +182,7 @@ public class ComputerPlayer implements Player {
 
       int numWaysToWin = 0;
       for (int i = 0; i < 4; i++) {
-        if (nEmptyTilesInLine[i] == size - 2) {
+        if (nEmptyTilesInLine[i] == 2) {
           numWaysToWin++;
         }
       }
@@ -146,6 +192,30 @@ public class ComputerPlayer implements Player {
       }
     }
     return -1;
+  }
+
+  private void removeLosingMoves(Set<Integer> validMoves, String[] board, String playerPiece, int size) {
+    Set<Integer> remainingMoves = new HashSet<>(validMoves);
+    Set<Integer> nonLosingMoves = new HashSet<>();
+
+    int playerWinningMove;
+    int opponentWinningMove;
+    for (Integer move : validMoves) {
+      remainingMoves.remove(move);
+      board[move] = playerPiece;
+      playerWinningMove = getWinningMoveThisTurn(remainingMoves, board, playerPiece, size);
+      opponentWinningMove = getWinningMoveNextTurn(remainingMoves, board, getOpponentPiece(playerPiece), size);
+      if ((playerWinningMove != -1 && opponentWinningMove != playerWinningMove) ||
+          opponentWinningMove == -1) {
+        nonLosingMoves.add(move);
+      }
+      board[move] = " ";
+      remainingMoves.add(move);
+    }
+    validMoves.retainAll(nonLosingMoves);
+    if (validMoves.isEmpty()) {
+      validMoves.addAll(remainingMoves);
+    }
   }
 
   private int getTileIdx(int j, int i, int row, int col, int size) {
@@ -161,5 +231,12 @@ public class ComputerPlayer implements Player {
       default:
         return -1;
     }
+  }
+
+  private int distanceToCentre(int side, int move) {
+    int centre = side / 2;
+    int moveCol = move % side;
+    int moveRow = move / side;
+    return Math.abs(moveRow - centre) + Math.abs(moveCol - centre);
   }
 }

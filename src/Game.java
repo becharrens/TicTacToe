@@ -36,6 +36,7 @@ public class Game {
       if (answer.length() > 0) {
         yesNo = answer.charAt(0);
         if (yesNo == 'y' || yesNo == 'n') {
+//          scanner.close();
           return yesNo;
         }
       }
@@ -55,6 +56,7 @@ public class Game {
           System.out.println("Board size must be at least 3!");
           continue;
         }
+//        scanner.close();
         return size;
       } catch (NumberFormatException e) {
         System.out.println("Input was not a number");
